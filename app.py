@@ -5,28 +5,33 @@ import uuid
 
 app = Flask(__name__)
 
-DOWNLOAD_FOLDER = "downloads"
+DOWNLOAD_FOLDER = "/tmp/downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        url = request.form["url"]
+        try:
+            url = request.form["url"]
 
-        filename = f"{uuid.uuid4()}.mp4"
-        filepath = os.path.join(DOWNLOAD_FOLDER, filename)
+            filename = f"{uuid.uuid4()}.mp4"
+            filepath = os.path.join(DOWNLOAD_FOLDER, filename)
 
-        ydl_opts = {
-            "outtmpl": filepath,
-            "format": "best"
-        }
+            ydl_opts = {
+                "outtmpl": filepath,
+                "format": "best",
+                "quiet": True
+            }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
 
-        return send_file(filepath, as_attachment=True)
+            return send_file(filepath, as_attachment=True)
+
+        except Exception as e:
+            return f"Error: {str(e)}", 500
 
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
